@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drm-license-server
+  namespace: streamnxt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: drm-license-server
+  template:
+    metadata:
+      labels:
+        app: drm-license-server
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: streamnxt-production-worker-ads
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: drm-license-server
+          image: ghcr.io/streamnxtplus-oss/drm-license-server:latest
+          ports:
+            - containerPort: 3007
+          env:
+            - name: NODE_ENV
+              value: "production"

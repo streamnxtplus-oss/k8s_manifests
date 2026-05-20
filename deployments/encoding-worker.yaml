@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: encoding-worker
+  namespace: streamnxt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: encoding-worker
+  template:
+    metadata:
+      labels:
+        app: encoding-worker
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: streamnxt-production-gpu
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: encoding-worker
+          image: ghcr.io/streamnxtplus-oss/ott-encoding-worker:latest
+          ports:
+            - containerPort: 3005
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: WORKER_PORT
+              value: "3005"
+            - name: WORKER_CONCURRENCY
+              value: "1"
+            - name: GPU_ENABLED
+              value: "false"
+            - name: ENCODING_PRESET
+              value: "balanced"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: streamnxt-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: streamnxt-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: streamnxt-secrets
+                  key: POSTGRES_DB
+            - name: DATABASE_URL
+              value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/$(POSTGRES_DB)"
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: streamnxt-secrets
+                  key: REDIS_PASSWORD
+            - name: REDIS_URL
+              value: "redis://:$(REDIS_PASSWORD)@redis:6379"
+            - name: S3_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: streamnxt-secrets
+                  key: S3_ENDPOINT
+            - name: S3_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: streamnxt-secrets
+                  key: S3_REGION
+            - name: S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: streamnxt-secrets
+                  key: S3_ACCESS_KEY
+            - name: S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: streamnxt-secrets
+                  key: S3_SECRET_KEY
+            - name: S3_BUCKET_CONTENT
+              value: "ott-content"
+            - name: APP_URL
+              value: "https://api-k3s.eliteworld.space"
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: streamnxt-secrets
+                  key: ENCRYPTION_KEY

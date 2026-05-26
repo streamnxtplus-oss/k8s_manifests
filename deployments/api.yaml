@@ -155,6 +155,20 @@ spec:
                 secretKeyRef:
                   name: streamnxt-secrets
                   key: DEPLOYMENT_TIER
+          # startupProbe gates liveness/readiness during slow boots —
+          # the API runs `prisma migrate deploy` + a migrations baseline
+          # pass before it starts listening on :3001. On a cold start
+          # this takes 60-120 s; with the old 30 s liveness grace the
+          # pod was being SIGKILL'd mid-baseline and the rollout would
+          # stall. 60 attempts × 5 s = 5 min budget; once /health
+          # answers once, the regular probes below take over.
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            failureThreshold: 60
+            periodSeconds: 5
+            timeoutSeconds: 3
           readinessProbe:
             httpGet:
               path: /health
